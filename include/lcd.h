@@ -47,8 +47,8 @@
 #define LCD_5x10_FONT (0x04)
 
 // LCD dimensions
-#define LCD_ROWS (2)
-#define LCD_COLS (16)
+#define LCD_ROWS (4)
+#define LCD_COLS (20)
 
 // Function prototypes
 void lcd_init(void);
