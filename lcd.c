@@ -115,12 +115,26 @@ void lcd_set_cursor(uint8_t row, uint8_t col)
 	if (col >= LCD_COLS)
 		col = LCD_COLS - 1;
 
-	// calculate ddram address
-	// row 0 starts at 0x00, row 1 starts at 0x40
-	uint8_t address = (row == 0) ? 0x00 : 0x40;
-	address += col;
+	uint8_t address;
 
-	// set ddram address
+	switch (row) {
+	case 0:
+		address = 0x00 + col;
+		break;
+	case 1:
+		address = 0x40 + col;
+		break;
+	case 2:
+		address = 0x14 + col;
+		break;
+	case 3:
+		address = 0x54 + col;
+		break;
+	default:
+		address = 0x00 + col;
+		break;
+	}
+
 	lcd_send_cmd(LCD_CMD_DDRAM_ADDR | address);
 }
 

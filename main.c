@@ -9,8 +9,11 @@
 // track which player's input we're reading
 static volatile uint8_t player1;
 static volatile uint8_t cur_meter;
-static volatile uint16_t adc_read;
+static volatile uint16_t adc;
+static volatile uint8_t p1_delta;
+static volatile uint8_t p2_delta;
 
+// static uint8_t map[LCD_COLS];
 
 enum GameState {
 	GS_TITLE,
@@ -25,7 +28,7 @@ ISR(TIMER1_COMPA_vect)
 
 ISR(ADC_vect)
 {
-	adc_read = ADCL | (ADCH << 8);
+	adc = ADCL | (ADCH << 8);
 	player1 = !player1;
 	// clear out the current meter being read
 	ADMUX &= ~(cur_meter);
@@ -65,14 +68,15 @@ void adc_init(void)
 int main(void)
 {
 	enum GameState state = GS_MAIN;
-	char buf[8] = {0};
+	// char buf[8] = {0};
+	struct ball ball = {8, 2, 0.95, 1};
 
 	_delay_ms(2000);
 	i2c_init();
 	lcd_init();
 
-	timer_init();
-	adc_init();
+	// timer_init();
+	// adc_init();
 
 	player1 = 1;
 	// starting meter is player1
@@ -95,18 +99,29 @@ int main(void)
 			break;
 
 		case GS_MAIN:
-			itoa(adc_read, buf, 10);
-			if (player1) {
-				lcd_set_cursor(0, 0);
-				lcd_display("     ");
-				lcd_set_cursor(0, 0);
-				lcd_display(buf);
-			} else {
-				lcd_set_cursor(1, 0);
-				lcd_display("     ");
-				lcd_set_cursor(1, 0);
-				lcd_display(buf);
-			}
+			move_ball(&ball);
+			render_ball(&ball);
+			// itoa(adc, buf, 10);
+			// if (player1) {
+			// 	if (adc > (p1_delta + ADC_FILTER)) {
+			// 		// move player1 up
+			// 	} else if (adc < (p1_delta + ADC_FILTER)) {
+			// 		// move player1 down
+			// 	}
+			//
+			// 	// update the delta
+			// 	p1_delta = adc;
+			//
+			// 	// lcd_set_cursor(0, 0);
+			// 	// lcd_display("     ");
+			// 	// lcd_set_cursor(0, 0);
+			// 	// lcd_display(buf);
+			// } else {
+			// 	lcd_set_cursor(1, 0);
+			// 	lcd_display("     ");
+			// 	lcd_set_cursor(1, 0);
+			// 	lcd_display(buf);
+			// }
 			// draw the two players
 			// read input and convert
 			// lcd_display("main loop!");
@@ -118,5 +133,7 @@ int main(void)
 			// lcd_display("main loop!");
 			break;
 		}
+
+		_delay_ms(150);
 	}
 }
