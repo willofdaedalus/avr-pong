@@ -67,16 +67,18 @@ void adc_init(void)
 
 int main(void)
 {
+	int8_t p1 = 0;
+	int8_t p1_prev = 0;
 	enum GameState state = GS_MAIN;
 	// char buf[8] = {0};
-	struct ball ball = {8, 2, 0.95, 1};
+	struct ball ball = {8, 2, 0.95, 1, 8, 2};
 
 	_delay_ms(2000);
 	i2c_init();
 	lcd_init();
 
-	// timer_init();
-	// adc_init();
+	timer_init();
+	adc_init();
 
 	player1 = 1;
 	// starting meter is player1
@@ -102,26 +104,28 @@ int main(void)
 			move_ball(&ball);
 			render_ball(&ball);
 			// itoa(adc, buf, 10);
-			// if (player1) {
-			// 	if (adc > (p1_delta + ADC_FILTER)) {
-			// 		// move player1 up
-			// 	} else if (adc < (p1_delta + ADC_FILTER)) {
-			// 		// move player1 down
-			// 	}
-			//
-			// 	// update the delta
-			// 	p1_delta = adc;
-			//
-			// 	// lcd_set_cursor(0, 0);
-			// 	// lcd_display("     ");
-			// 	// lcd_set_cursor(0, 0);
-			// 	// lcd_display(buf);
-			// } else {
-			// 	lcd_set_cursor(1, 0);
-			// 	lcd_display("     ");
-			// 	lcd_set_cursor(1, 0);
-			// 	lcd_display(buf);
-			// }
+			if (player1) {
+				if (adc > (uint16_t) (p1_delta + ADC_FILTER)) {
+					p1 += 1;
+				} else if (adc <
+					   (uint16_t) (p1_delta - ADC_FILTER)) {
+					p1 -= 1;
+				}
+
+				if (p1 < 0)
+					p1 = 0;
+				else if (p1 > LCD_ROWS - 1)
+					p1 = LCD_ROWS - 1;
+
+				lcd_set_cursor(p1_prev, 1);
+				lcd_display(" ");
+				lcd_set_cursor(p1, 1);
+				lcd_display("|");
+
+				// update the delta
+				p1_delta = adc;
+				p1_prev = p1;
+			}
 			// draw the two players
 			// read input and convert
 			// lcd_display("main loop!");

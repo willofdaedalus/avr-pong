@@ -1,7 +1,6 @@
 #include "lcd.h"
 #include "main.h"
 
-
 void move_ball(struct ball *b)
 {
 	if (!b)
@@ -10,7 +9,6 @@ void move_ball(struct ball *b)
 	b->x += b->dx;
 	b->y += b->dy;
 
-	// vertical walls (top/bottom)
 	if (b->y < 0) {
 		b->y = 0;
 		b->dy = -b->dy;
@@ -19,7 +17,6 @@ void move_ball(struct ball *b)
 		b->dy = -b->dy;
 	}
 
-	// horizontal walls (left/right)
 	if (b->x < 0) {
 		b->x = 0;
 		b->dx = -b->dx;
@@ -29,20 +26,22 @@ void move_ball(struct ball *b)
 	}
 }
 
-void render_ball(struct ball *ball)
+void render_ball(struct ball *b)
 {
-	if (!ball)
-		return;
+	uint8_t new_x = (uint8_t) (b->x);
+	uint8_t new_y = (uint8_t) (b->y);
 
-	lcd_clear();
-	lcd_set_cursor((uint8_t) ball->y, (uint8_t) ball->x);
-	// lcd_set_cursor((uint8_t) (ball->y + 0.5f), (uint8_t) (ball->x +
-	// 0.5f));
+	// erase old ball if it moved
+	if (b->prev_x != new_x || b->prev_y != new_y) {
+		lcd_set_cursor(b->prev_y, b->prev_x);
+		lcd_display(" ");
+	}
+
+	// draw new ball
+	lcd_set_cursor(new_y, new_x);
 	lcd_display("o");
-}
 
-void check_collisions(struct ball *ball)
-{
-	if (!ball)
-		return;
+	// update previous position
+	b->prev_x = new_x;
+	b->prev_y = new_y;
 }
