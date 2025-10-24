@@ -1,8 +1,10 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+#include <stdint.h>
+
 #define ADC_CONST (1023.0f)
-#define ADC_FILTER (75)
+#define ADC_FILTER (10)
 
 #define PLAYER1_ADC (0x7) // pin A0
 #define PLAYER2_ADC (0x0) // pin A5
@@ -17,5 +19,10 @@ struct ball {
 
 void render_ball(struct ball *ball);
 void move_ball(struct ball *ball);
+void paddle_logic(uint16_t adc,
+		  int8_t *pos,
+		  uint8_t *del,
+		  uint8_t *prev,
+		  uint8_t x);
 
 #endif

@@ -3,17 +3,14 @@
 #include "lcd.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
-#include <stdlib.h>
 #include <util/delay.h>
+
+#define BALL_VEL (0.5)
 
 // track which player's input we're reading
 static volatile uint8_t player1;
 static volatile uint8_t cur_meter;
 static volatile uint16_t adc;
-static volatile uint8_t p1_delta;
-static volatile uint8_t p2_delta;
-
-// static uint8_t map[LCD_COLS];
 
 enum GameState {
 	GS_TITLE,
@@ -23,6 +20,7 @@ enum GameState {
 
 ISR(TIMER1_COMPA_vect)
 {
+	// on time compare match begin adc conversion
 	ADCSRA |= _BV(ADSC);
 }
 
@@ -44,7 +42,7 @@ void timer_init(void)
 	TCCR1B |= _BV(CS12) | _BV(CS10) | _BV(WGM12);
 	// ~150ms for every update to reduce analogue noise and excessive
 	// polling on the potmeters
-	OCR1A = 2344;
+	OCR1A = 780;
 	TIMSK1 = _BV(OCIE1A);
 }
 
@@ -67,11 +65,16 @@ void adc_init(void)
 
 int main(void)
 {
-	int8_t p1 = 0;
-	int8_t p1_prev = 0;
+	int8_t p1 = 0, p2 = 0;
+	uint8_t p1_prev = 0, p2_prev = 0;
+	uint8_t p1_delta, p2_delta;
 	enum GameState state = GS_MAIN;
-	// char buf[8] = {0};
-	struct ball ball = {8, 2, 0.95, 1, 8, 2};
+	struct ball ball = {.x = 8,
+			    .y = 2,
+			    .dx = BALL_VEL,
+			    .dy = BALL_VEL,
+			    .prev_x = 8,
+			    .prev_y = 2};
 
 	_delay_ms(2000);
 	i2c_init();
@@ -103,32 +106,12 @@ int main(void)
 		case GS_MAIN:
 			move_ball(&ball);
 			render_ball(&ball);
-			// itoa(adc, buf, 10);
+
 			if (player1) {
-				if (adc > (uint16_t) (p1_delta + ADC_FILTER)) {
-					p1 += 1;
-				} else if (adc <
-					   (uint16_t) (p1_delta - ADC_FILTER)) {
-					p1 -= 1;
-				}
-
-				if (p1 < 0)
-					p1 = 0;
-				else if (p1 > LCD_ROWS - 1)
-					p1 = LCD_ROWS - 1;
-
-				lcd_set_cursor(p1_prev, 1);
-				lcd_display(" ");
-				lcd_set_cursor(p1, 1);
-				lcd_display("|");
-
-				// update the delta
-				p1_delta = adc;
-				p1_prev = p1;
+				paddle_logic(adc, &p1, &p1_delta, &p1_prev, 1);
+			} else {
+				paddle_logic(adc, &p2, &p2_delta, &p2_prev, 18);
 			}
-			// draw the two players
-			// read input and convert
-			// lcd_display("main loop!");
 			break;
 
 		case GS_SCORE:
@@ -138,6 +121,6 @@ int main(void)
 			break;
 		}
 
-		_delay_ms(150);
+		_delay_ms(50);
 	}
 }
