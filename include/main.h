@@ -9,6 +9,9 @@
 #define PLAYER1_ADC (0x7) // pin A0
 #define PLAYER2_ADC (0x0) // pin A5
 
+#define PLAYER1_COL (1)
+#define PLAYER2_COL (18)
+
 #define BALL_SPEED (0.5f)
 
 struct ball {
@@ -18,7 +21,7 @@ struct ball {
 };
 
 void render_ball(struct ball *ball);
-void move_ball(struct ball *ball);
+void move_ball(struct ball *ball, int8_t p1, int8_t p2);
 void paddle_logic(uint16_t adc, int8_t *pos, uint8_t *prev, uint8_t x);
 
 #endif

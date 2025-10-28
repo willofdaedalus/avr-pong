@@ -21,6 +21,12 @@ enum GameState {
 
 ISR(TIMER1_COMPA_vect)
 {
+	uint8_t sample_chan = cur_meter;
+
+	adc = ADC;
+	adc_chan = sample_chan;
+
+
 	// on time compare match begin adc conversion
 	ADCSRA |= _BV(ADSC);
 }
@@ -39,7 +45,7 @@ void timer_init(void)
 {
 	// prescaler 1024 with CTC
 	TCCR1B |= _BV(CS12) | _BV(CS10) | _BV(WGM12);
-	// ~150ms for every update to reduce analogue noise and excessive
+	// ~50ms for every update to reduce analogue noise and excessive
 	// polling on the potmeters
 	OCR1A = 780;
 	TIMSK1 = _BV(OCIE1A);
@@ -110,13 +116,15 @@ int main(void)
 			break;
 
 		case GS_MAIN:
-			move_ball(&ball);
+			move_ball(&ball, p1, p2);
 			render_ball(&ball);
 
 			if (chan) {
-				paddle_logic(adc_copy, &p1, &p1_prev, 1);
+				paddle_logic(
+					adc_copy, &p1, &p1_prev, PLAYER1_COL);
 			} else {
-				paddle_logic(adc_copy, &p2, &p2_prev, 18);
+				paddle_logic(
+					adc_copy, &p2, &p2_prev, PLAYER2_COL);
 			}
 			break;
 
@@ -127,6 +135,6 @@ int main(void)
 			break;
 		}
 
-		_delay_ms(50);
+		_delay_ms(100);
 	}
 }
