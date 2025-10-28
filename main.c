@@ -3,12 +3,13 @@
 #include "lcd.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <util/atomic.h>
 #include <util/delay.h>
 
 #define BALL_VEL (0.5)
 
 // track which player's input we're reading
-static volatile uint8_t player1;
+static volatile uint8_t adc_chan;
 static volatile uint8_t cur_meter;
 static volatile uint16_t adc;
 
@@ -27,11 +28,11 @@ ISR(TIMER1_COMPA_vect)
 ISR(ADC_vect)
 {
 	adc = ADCL | (ADCH << 8);
-	player1 = !player1;
+	adc_chan = !adc_chan;
 	// clear out the current meter being read
 	ADMUX &= ~(cur_meter);
 	// switch to the next potmeter
-	cur_meter = (player1) ? PLAYER1_ADC : PLAYER2_ADC;
+	cur_meter = (adc_chan) ? PLAYER1_ADC : PLAYER2_ADC;
 	// activate the next meter for reading on the next update
 	ADMUX |= cur_meter;
 }
@@ -66,8 +67,9 @@ void adc_init(void)
 int main(void)
 {
 	int8_t p1 = 0, p2 = 0;
+	uint8_t chan;
 	uint8_t p1_prev = 0, p2_prev = 0;
-	uint8_t p1_delta, p2_delta;
+	uint16_t adc_copy;
 	enum GameState state = GS_MAIN;
 	struct ball ball = {.x = 8,
 			    .y = 2,
@@ -83,14 +85,20 @@ int main(void)
 	timer_init();
 	adc_init();
 
-	player1 = 1;
-	// starting meter is player1
+	adc_chan = 1;
+	// starting meter is adc_chan
 	cur_meter = PLAYER1_ADC;
 
 
 	sei();
 
 	while (1) {
+		ATOMIC_BLOCK(ATOMIC_FORCEON)
+		{
+			adc_copy = adc;
+			chan = adc_chan;
+		}
+
 		switch (state) {
 		case GS_TITLE:
 			lcd_clear();
@@ -107,10 +115,10 @@ int main(void)
 			move_ball(&ball);
 			render_ball(&ball);
 
-			if (player1) {
-				paddle_logic(adc, &p1, &p1_delta, &p1_prev, 1);
+			if (chan) {
+				paddle_logic(adc_copy, &p1, &p1_prev, 1);
 			} else {
-				paddle_logic(adc, &p2, &p2_delta, &p2_prev, 18);
+				paddle_logic(adc_copy, &p2, &p2_prev, 18);
 			}
 			break;
 

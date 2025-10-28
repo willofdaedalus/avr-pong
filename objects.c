@@ -47,29 +47,24 @@ void render_ball(struct ball *b)
 }
 
 
-void update_paddle(uint16_t adc,
-		   int8_t *pos,
-		   uint8_t *delta,
-		   uint8_t *prev,
-		   uint8_t x)
+void paddle_logic(uint16_t adc, int8_t *pos, uint8_t *prev, uint8_t x)
 {
-	if (adc > (uint16_t) (*delta + ADC_FILTER)) {
-		*pos += 1;
-	} else if (adc < (uint16_t) (*delta - ADC_FILTER)) {
-		*pos -= 1;
-	}
+	int8_t new_pos;
 
-	if (*pos < 0)
-		*pos = 0;
-	else if (*pos > LCD_ROWS - 1)
-		*pos = LCD_ROWS - 1;
+	// direct mapping: adc (0-1023) -> rows (0-3)
+	new_pos = (adc * LCD_ROWS) / 1024;
+
+	// safety clamp
+	if (new_pos < 0)
+		new_pos = 0;
+	else if (new_pos > LCD_ROWS - 1)
+		new_pos = LCD_ROWS - 1;
 
 	lcd_set_cursor(*prev, x);
 	lcd_display(" ");
-	lcd_set_cursor(*pos, x);
+	lcd_set_cursor(new_pos, x);
 	lcd_display("|");
 
-	// update the delta
-	*delta = adc;
-	*prev = *pos;
+	*prev = new_pos;
+	*pos = new_pos;
 }

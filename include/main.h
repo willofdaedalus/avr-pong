@@ -19,10 +19,6 @@ struct ball {
 
 void render_ball(struct ball *ball);
 void move_ball(struct ball *ball);
-void paddle_logic(uint16_t adc,
-		  int8_t *pos,
-		  uint8_t *del,
-		  uint8_t *prev,
-		  uint8_t x);
+void paddle_logic(uint16_t adc, int8_t *pos, uint8_t *prev, uint8_t x);
 
 #endif
