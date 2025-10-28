@@ -29,12 +29,10 @@ ISR(ADC_vect)
 {
 	adc = ADCL | (ADCH << 8);
 	adc_chan = !adc_chan;
-	// clear out the current meter being read
-	ADMUX &= ~(cur_meter);
 	// switch to the next potmeter
 	cur_meter = (adc_chan) ? PLAYER1_ADC : PLAYER2_ADC;
 	// activate the next meter for reading on the next update
-	ADMUX |= cur_meter;
+	ADMUX = (ADMUX & 0xf0) | (cur_meter & 0x0f);
 }
 
 void timer_init(void)
